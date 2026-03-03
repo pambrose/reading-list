@@ -57,7 +57,7 @@ export function CollectionTabs({ collections }: { collections: Collection[] }) {
       >
         Uncategorized
       </button>
-      {collections.map((c) => (
+      {[...collections].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
         <button
           key={c.id}
           onClick={() => setCollection(c.id)}

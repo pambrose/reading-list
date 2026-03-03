@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Collection } from "@/types/database";
 import { PRIORITY_LEVELS, PRIORITY_LABELS } from "@/lib/utils/priority";
@@ -29,20 +29,53 @@ export function BulkImport({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [done, setDone] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [os, setOs] = useState<"macOS" | "Windows" | "Linux">("macOS");
   const [browser, setBrowser] = useState("Safari");
   const abortRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
-  const browserCommands: Record<string, { command: string; note?: string }> = {
-    Safari: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Safari" to (url of tabs of windows) as text' > safari-urls.txt` },
-    Chrome: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Google Chrome" to (url of tabs of windows) as text' > chrome-urls.txt` },
-    "Microsoft Edge": { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Microsoft Edge" to (url of tabs of windows) as text' > edge-urls.txt` },
-    Brave: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Brave Browser" to (url of tabs of windows) as text' > brave-urls.txt` },
-    Firefox: { command: `copy([...gBrowser.tabs].map(t => t.linkedBrowser.currentURI.spec).join('\\n'))`, note: "Firefox doesn't support AppleScript. Open the Browser Console (Cmd+Shift+J), run this command, then paste the result into a text file." },
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (ua.includes("Win")) {
+      setOs("Windows");
+      setBrowser("Chrome");
+    } else if (!ua.includes("Mac")) {
+      setOs("Linux");
+      setBrowser("Chrome");
+    }
+  }, []);
+
+  const firefoxConsoleNote = `Open the Browser Console (${os === "macOS" ? "Cmd" : "Ctrl"}+Shift+J), run this command, then paste the result into a text file.`;
+  const extensionNote = `Install a "Copy All Tab URLs" extension from your browser's extension store, then use it to copy all tab URLs and paste into a text file.`;
+
+  const allBrowserCommands: Record<string, Record<string, { command?: string; note?: string }>> = {
+    macOS: {
+      Safari: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Safari" to (url of tabs of windows) as text' > safari-urls.txt` },
+      Chrome: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Google Chrome" to (url of tabs of windows) as text' > chrome-urls.txt` },
+      "Microsoft Edge": { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Microsoft Edge" to (url of tabs of windows) as text' > edge-urls.txt` },
+      Brave: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Brave Browser" to (url of tabs of windows) as text' > brave-urls.txt` },
+      Firefox: { command: `copy([...gBrowser.tabs].map(t => t.linkedBrowser.currentURI.spec).join('\\n'))`, note: firefoxConsoleNote },
+    },
+    Windows: {
+      Chrome: { note: extensionNote },
+      "Microsoft Edge": { note: extensionNote },
+      Firefox: { command: `copy([...gBrowser.tabs].map(t => t.linkedBrowser.currentURI.spec).join('\\n'))`, note: firefoxConsoleNote },
+      Brave: { note: extensionNote },
+    },
+    Linux: {
+      Chrome: { note: extensionNote },
+      Firefox: { command: `copy([...gBrowser.tabs].map(t => t.linkedBrowser.currentURI.spec).join('\\n'))`, note: firefoxConsoleNote },
+      "Microsoft Edge": { note: extensionNote },
+      Brave: { note: extensionNote },
+    },
   };
 
+  const browserCommands = allBrowserCommands[os];
+  const currentCommand = browserCommands[browser];
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(browserCommands[browser].command);
+    if (!currentCommand?.command) return;
+    await navigator.clipboard.writeText(currentCommand.command);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -196,7 +229,7 @@ export function BulkImport({
           />
           <details className="mt-3">
             <summary className="cursor-pointer text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 select-none">
-              How to gather the URLs of all your browser tabs
+              How to gather the URLs of all your browser tabs on {os}
             </summary>
             <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
               <div className="mb-2 flex items-center gap-2">
@@ -211,36 +244,38 @@ export function BulkImport({
                   ))}
                 </select>
               </div>
-              {browserCommands[browser].note && (
-                <p className="mb-2 text-xs text-amber-600 dark:text-amber-400">
-                  {browserCommands[browser].note}
+              {currentCommand?.note && (
+                <p className={`mb-2 text-xs ${currentCommand.command ? "text-amber-600 dark:text-amber-400" : "text-gray-600 dark:text-gray-400"}`}>
+                  {currentCommand.note}
                 </p>
               )}
-              {!browserCommands[browser].note && (
+              {!currentCommand?.note && (
                 <p className="mb-2 text-xs text-gray-600 dark:text-gray-400">
                   Run this command in your terminal to export all open tab URLs to a file:
                 </p>
               )}
-              <div className="flex items-start gap-2">
-                <code className="flex-1 whitespace-pre-wrap break-all rounded bg-gray-200 px-2 py-1.5 text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                  {browserCommands[browser].command}
-                </code>
-                <button
-                  onClick={handleCopy}
-                  className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition-colors"
-                  title="Copy to clipboard"
-                >
-                  {copied ? (
-                    <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              {currentCommand?.command && (
+                <div className="flex items-start gap-2">
+                  <code className="flex-1 whitespace-pre-wrap break-all rounded bg-gray-200 px-2 py-1.5 text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                    {currentCommand.command}
+                  </code>
+                  <button
+                    onClick={handleCopy}
+                    className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? (
+                      <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </details>
         </div>

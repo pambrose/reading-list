@@ -138,8 +138,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Fire-and-forget Slack notification
-  notifySlackBookmarkCreated({
+  // Await Slack notification (serverless runtimes kill unawaited promises)
+  await notifySlackBookmarkCreated({
     title: metadata.title,
     url,
     collectionName: resolvedCollectionName,

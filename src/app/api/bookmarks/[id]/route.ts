@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { PRIORITY_LEVELS } from "@/lib/utils/priority";
 
 export async function PATCH(
   request: Request,
@@ -15,10 +16,19 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
 
-  // Only allow updating is_read and collection_id
+  // Only allow updating is_read, collection_id, and priority
+  if (body.priority !== undefined && !(PRIORITY_LEVELS as readonly string[]).includes(body.priority)) {
+    return NextResponse.json({ error: "Invalid priority value" }, { status: 400 });
+  }
+
   const updates: Record<string, unknown> = {};
   if (typeof body.is_read === "boolean") updates.is_read = body.is_read;
   if (body.collection_id !== undefined) updates.collection_id = body.collection_id || null;
+  if (body.priority !== undefined) updates.priority = body.priority;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("bookmarks")

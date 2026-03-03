@@ -4,14 +4,15 @@ import { CollectionTabs } from "@/components/collections/collection-tabs";
 import { FilterTabs } from "@/components/bookmarks/filter-tabs";
 import { BookmarkList } from "@/components/bookmarks/bookmark-list";
 import { CollectionMenu } from "@/components/collections/collection-menu";
+import { PRIORITY_LEVELS } from "@/lib/utils/priority";
 import type { Bookmark, Collection } from "@/types/database";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ collection?: string; filter?: string }>;
+  searchParams: Promise<{ collection?: string; filter?: string; priority?: string; sort?: string }>;
 }) {
-  const { collection, filter } = await searchParams;
+  const { collection, filter, priority, sort } = await searchParams;
   const supabase = await createClient();
 
   // Fetch collections
@@ -23,8 +24,7 @@ export default async function DashboardPage({
   // Build bookmarks query
   let query = supabase
     .from("bookmarks")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("*");
 
   if (collection === "uncategorized") {
     query = query.is("collection_id", null);
@@ -36,6 +36,18 @@ export default async function DashboardPage({
     query = query.eq("is_read", false);
   } else if (filter === "read") {
     query = query.eq("is_read", true);
+  }
+
+  if (priority && (PRIORITY_LEVELS as readonly string[]).includes(priority)) {
+    query = query.eq("priority", priority);
+  }
+
+  if (sort === "priority") {
+    query = query
+      .order("priority_order", { ascending: true })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
   }
 
   const { data: bookmarks } = await query;

@@ -1,4 +1,6 @@
 import type { Bookmark } from "@/types/database";
+import { PRIORITY_BORDER } from "@/lib/utils/priority";
+import { PriorityBadge } from "./priority-badge";
 
 export function BookmarkCardReadonly({ bookmark }: { bookmark: Bookmark }) {
   const displayUrl = (() => {
@@ -10,7 +12,7 @@ export function BookmarkCardReadonly({ bookmark }: { bookmark: Bookmark }) {
   })();
 
   return (
-    <div className="rounded-lg border bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+    <div className={`rounded-lg border bg-white p-4 dark:border-gray-700 dark:bg-gray-900 ${PRIORITY_BORDER[bookmark.priority] || ""}`}>
       <div className="flex gap-4">
         {bookmark.image_url && (
           <div className="hidden sm:block flex-shrink-0">
@@ -39,6 +41,9 @@ export function BookmarkCardReadonly({ bookmark }: { bookmark: Bookmark }) {
               {bookmark.description}
             </p>
           )}
+          <div className="mt-2">
+            <PriorityBadge priority={bookmark.priority} />
+          </div>
         </div>
       </div>
     </div>

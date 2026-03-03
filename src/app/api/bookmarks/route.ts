@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { fetchOGMetadata, isYouTubeUrl, isTwitterUrl } from "@/lib/utils/metadata";
+import { PRIORITY_LEVELS } from "@/lib/utils/priority";
+import type { Priority } from "@/lib/utils/priority";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -32,6 +34,11 @@ export async function GET(request: Request) {
     query = query.eq("is_read", false);
   }
 
+  const priorityFilter = searchParams.get("priority");
+  if (priorityFilter && (PRIORITY_LEVELS as readonly string[]).includes(priorityFilter)) {
+    query = query.eq("priority", priorityFilter);
+  }
+
   const { data, error } = await query;
 
   if (error) {
@@ -50,7 +57,8 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { url, collection_id } = body;
+  const { url, collection_id, priority } = body;
+  const safePriority: Priority = (PRIORITY_LEVELS as readonly string[]).includes(priority) ? priority : "normal";
 
   if (!url) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -90,6 +98,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       url,
       collection_id: resolvedCollectionId,
+      priority: safePriority,
       title: metadata.title,
       description: metadata.description,
       image_url: metadata.image_url,

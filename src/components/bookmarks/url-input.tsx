@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Collection } from "@/types/database";
+import { PRIORITY_LEVELS, PRIORITY_LABELS } from "@/lib/utils/priority";
+import type { Priority } from "@/lib/utils/priority";
 
 export function UrlInput({ collections }: { collections: Collection[] }) {
   const [url, setUrl] = useState("");
   const [collectionId, setCollectionId] = useState("");
+  const [priority, setPriority] = useState<Priority>("normal");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -22,11 +25,13 @@ export function UrlInput({ collections }: { collections: Collection[] }) {
         body: JSON.stringify({
           url: url.trim(),
           collection_id: collectionId || null,
+          priority,
         }),
       });
 
       if (res.ok) {
         setUrl("");
+        setPriority("normal");
         router.refresh();
       }
     } finally {
@@ -35,7 +40,7 @@ export function UrlInput({ collections }: { collections: Collection[] }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex flex-wrap gap-2">
       <input
         type="url"
         value={url}
@@ -56,9 +61,20 @@ export function UrlInput({ collections }: { collections: Collection[] }) {
           </option>
         ))}
       </select>
+      <select
+        value={priority}
+        onChange={(e) => setPriority(e.target.value as Priority)}
+        className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+      >
+        {PRIORITY_LEVELS.map((p) => (
+          <option key={p} value={p}>
+            {PRIORITY_LABELS[p]}
+          </option>
+        ))}
+      </select>
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !url.trim()}
         className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
         {loading ? "Saving..." : "Save"}

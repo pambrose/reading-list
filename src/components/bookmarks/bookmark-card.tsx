@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Bookmark, Collection } from "@/types/database";
 import { timeAgo } from "@/lib/utils/time";
+import { PRIORITY_BORDER, PRIORITY_LEVELS, PRIORITY_LABELS } from "@/lib/utils/priority";
+import type { Priority } from "@/lib/utils/priority";
+import { PriorityBadge } from "./priority-badge";
 
 export function BookmarkCard({
   bookmark,
@@ -15,6 +18,7 @@ export function BookmarkCard({
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [moveMenuOpen, setMoveMenuOpen] = useState(false);
+  const [priorityMenuOpen, setPriorityMenuOpen] = useState(false);
 
   const toggleRead = async () => {
     await fetch(`/api/bookmarks/${bookmark.id}`, {
@@ -36,6 +40,17 @@ export function BookmarkCard({
     router.refresh();
   };
 
+  const changePriority = async (newPriority: Priority) => {
+    await fetch(`/api/bookmarks/${bookmark.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priority: newPriority }),
+    });
+    setPriorityMenuOpen(false);
+    setMenuOpen(false);
+    router.refresh();
+  };
+
   const handleDelete = async () => {
     if (!confirm("Delete this bookmark?")) return;
     await fetch(`/api/bookmarks/${bookmark.id}`, { method: "DELETE" });
@@ -50,11 +65,16 @@ export function BookmarkCard({
     }
   })();
 
+  // Priority border takes precedence; normal falls back to unread blue
+  const borderClass = (() => {
+    if (bookmark.priority !== "normal") return PRIORITY_BORDER[bookmark.priority];
+    if (!bookmark.is_read) return "border-l-4 border-l-blue-500";
+    return "";
+  })();
+
   return (
     <div
-      className={`relative rounded-lg border bg-white p-4 transition-shadow hover:shadow-md dark:bg-gray-900 dark:border-gray-700 ${
-        !bookmark.is_read ? "border-l-4 border-l-blue-500" : ""
-      }`}
+      className={`relative rounded-lg border bg-white p-4 transition-shadow hover:shadow-md dark:bg-gray-900 dark:border-gray-700 ${borderClass}`}
     >
       <div className="flex gap-4">
         {/* OG Image thumbnail */}
@@ -89,6 +109,7 @@ export function BookmarkCard({
             <span className="text-xs text-gray-400 dark:text-gray-500">
               {timeAgo(bookmark.created_at)}
             </span>
+            <PriorityBadge priority={bookmark.priority} />
             <button
               onClick={toggleRead}
               className={`text-xs font-medium transition-colors ${
@@ -105,7 +126,7 @@ export function BookmarkCard({
         {/* Overflow menu */}
         <div className="relative flex-shrink-0">
           <button
-            onClick={() => { setMenuOpen(!menuOpen); setMoveMenuOpen(false); }}
+            onClick={() => { setMenuOpen(!menuOpen); setMoveMenuOpen(false); setPriorityMenuOpen(false); }}
             className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -116,7 +137,7 @@ export function BookmarkCard({
           {menuOpen && (
             <div className="absolute right-0 top-8 z-10 w-48 rounded-lg border bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800">
               <button
-                onClick={() => setMoveMenuOpen(!moveMenuOpen)}
+                onClick={() => { setMoveMenuOpen(!moveMenuOpen); setPriorityMenuOpen(false); }}
                 className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Move to collection
@@ -136,6 +157,30 @@ export function BookmarkCard({
                       className="w-full px-6 py-1.5 text-left text-xs text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
                     >
                       {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => { setPriorityMenuOpen(!priorityMenuOpen); setMoveMenuOpen(false); }}
+                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Set priority
+              </button>
+              {priorityMenuOpen && (
+                <div className="border-t dark:border-gray-600">
+                  {PRIORITY_LEVELS.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => changePriority(p)}
+                      className={`w-full px-6 py-1.5 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                        bookmark.priority === p
+                          ? "font-semibold text-blue-600 dark:text-blue-400"
+                          : "text-gray-600 dark:text-gray-400"
+                      }`}
+                    >
+                      {PRIORITY_LABELS[p]}
+                      {bookmark.priority === p && " \u2713"}
                     </button>
                   ))}
                 </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { fetchOGMetadata } from "@/lib/utils/metadata";
+import { fetchOGMetadata, isYouTubeUrl, isTwitterUrl } from "@/lib/utils/metadata";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -59,12 +59,37 @@ export async function POST(request: Request) {
   // Fetch OG metadata server-side
   const metadata = await fetchOGMetadata(url);
 
+  // Auto-assign URLs to collections based on site
+  let resolvedCollectionId = collection_id || null;
+  if (!resolvedCollectionId) {
+    const autoCollection = isYouTubeUrl(url) ? "Videos" : isTwitterUrl(url) ? "Tweets" : null;
+    if (autoCollection) {
+      const { data: existing } = await supabase
+        .from("collections")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("name", autoCollection)
+        .single();
+
+      if (existing) {
+        resolvedCollectionId = existing.id;
+      } else {
+        const { data: created } = await supabase
+          .from("collections")
+          .insert({ user_id: user.id, name: autoCollection })
+          .select("id")
+          .single();
+        if (created) resolvedCollectionId = created.id;
+      }
+    }
+  }
+
   const { data, error } = await supabase
     .from("bookmarks")
     .insert({
       user_id: user.id,
       url,
-      collection_id: collection_id || null,
+      collection_id: resolvedCollectionId,
       title: metadata.title,
       description: metadata.description,
       image_url: metadata.image_url,

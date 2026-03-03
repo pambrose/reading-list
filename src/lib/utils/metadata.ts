@@ -7,6 +7,23 @@ export interface OGMetadata {
   site_name: string | null;
 }
 
+export function isYouTubeUrl(url: string): boolean {
+  return getYouTubeVideoId(url) !== null;
+}
+
+export function isTwitterUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return (
+      (u.hostname === "x.com" || u.hostname === "www.x.com" ||
+       u.hostname === "twitter.com" || u.hostname === "www.twitter.com") &&
+      /^\/\w+\/status\/\d+/.test(u.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function getYouTubeVideoId(url: string): string | null {
   try {
     const u = new URL(url);
@@ -44,11 +61,36 @@ async function fetchYouTubeMetadata(url: string, videoId: string): Promise<OGMet
   };
 }
 
+async function fetchTwitterMetadata(url: string): Promise<OGMetadata> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`;
+  const response = await fetch(oembedUrl, { signal: controller.signal });
+  clearTimeout(timeout);
+
+  if (!response.ok) return { title: null, description: null, image_url: null, site_name: "X" };
+
+  const data = await response.json();
+  // Strip HTML tags from the tweet text
+  const tweetText = data.html
+    ? cheerio.load(data.html)("blockquote").first().text().trim()
+    : null;
+  return {
+    title: data.author_name ? `@${data.author_name}` : null,
+    description: tweetText || null,
+    image_url: null,
+    site_name: "X",
+  };
+}
+
 export async function fetchOGMetadata(url: string): Promise<OGMetadata> {
   try {
     // Use YouTube oEmbed API for reliable title + thumbnail
     const videoId = getYouTubeVideoId(url);
     if (videoId) return await fetchYouTubeMetadata(url, videoId);
+
+    // Use Twitter/X oEmbed API for tweet text
+    if (isTwitterUrl(url)) return await fetchTwitterMetadata(url);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);

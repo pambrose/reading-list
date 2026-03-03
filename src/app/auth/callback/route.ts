@@ -10,6 +10,23 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Ensure default collections exist for the user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const defaultCollections = ["Videos", "Tweets"];
+        const { data: existing } = await supabase
+          .from("collections")
+          .select("name")
+          .eq("user_id", user.id)
+          .in("name", defaultCollections);
+        const existingNames = new Set((existing || []).map((c) => c.name));
+        const missing = defaultCollections.filter((name) => !existingNames.has(name));
+        if (missing.length > 0) {
+          await supabase
+            .from("collections")
+            .insert(missing.map((name) => ({ user_id: user.id, name })));
+        }
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

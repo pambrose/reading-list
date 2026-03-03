@@ -64,6 +64,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
   }
 
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return NextResponse.json({ error: "URL must start with http:// or https://" }, { status: 400 });
+    }
+  } catch {
+    return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
+  }
+
   // Check for duplicate URL for this user
   const { data: existing } = await supabase
     .from("bookmarks")

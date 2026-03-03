@@ -6,7 +6,7 @@ import type { Collection } from "@/types/database";
 import { PRIORITY_LEVELS, PRIORITY_LABELS } from "@/lib/utils/priority";
 import type { Priority } from "@/lib/utils/priority";
 
-type ResultStatus = "success" | "skipped" | "error";
+type ResultStatus = "success" | "skipped" | "invalid" | "error";
 
 interface ImportResult {
   url: string;
@@ -41,15 +41,7 @@ export function BulkImport({
       const parsed = text
         .split("\n")
         .map((line) => line.trim())
-        .filter((line) => {
-          if (!line) return false;
-          try {
-            const u = new URL(line);
-            return u.protocol === "http:" || u.protocol === "https:";
-          } catch {
-            return false;
-          }
-        });
+        .filter(Boolean);
       setUrls(parsed);
       setResults([]);
       setDone(false);
@@ -70,6 +62,21 @@ export function BulkImport({
 
       setCurrentIndex(i);
       const url = urls[i];
+
+      // Flag invalid URLs without hitting the API
+      let isValid = false;
+      try {
+        const parsed = new URL(url);
+        isValid = parsed.protocol === "http:" || parsed.protocol === "https:";
+      } catch { /* invalid */ }
+
+      if (!isValid) {
+        setResults((prev) => [
+          ...prev,
+          { url, status: "invalid", message: "Invalid URL" },
+        ]);
+        continue;
+      }
 
       try {
         const res = await fetch("/api/bookmarks", {
@@ -129,6 +136,7 @@ export function BulkImport({
 
   const successCount = results.filter((r) => r.status === "success").length;
   const skippedCount = results.filter((r) => r.status === "skipped").length;
+  const invalidCount = results.filter((r) => r.status === "invalid").length;
   const errorCount = results.filter((r) => r.status === "error").length;
 
   return (
@@ -177,8 +185,8 @@ export function BulkImport({
       {urls.length > 0 && !importing && !done && (
         <div className="space-y-3">
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Found <span className="font-medium">{urls.length}</span> valid URL
-            {urls.length !== 1 && "s"} to import.
+            Found <span className="font-medium">{urls.length}</span> line
+            {urls.length !== 1 && "s"} to import. Invalid URLs will be flagged.
           </p>
           <div className="flex flex-wrap gap-2">
             <select
@@ -261,6 +269,11 @@ export function BulkImport({
                 {skippedCount} skipped
               </span>
             )}
+            {invalidCount > 0 && (
+              <span className="text-orange-600 dark:text-orange-400">
+                {invalidCount} invalid
+              </span>
+            )}
             {errorCount > 0 && (
               <span className="text-red-600 dark:text-red-400">
                 {errorCount} failed
@@ -278,6 +291,9 @@ export function BulkImport({
                 )}
                 {r.status === "skipped" && (
                   <span className="mt-0.5 shrink-0 text-yellow-500">—</span>
+                )}
+                {r.status === "invalid" && (
+                  <span className="mt-0.5 shrink-0 text-orange-500">!</span>
                 )}
                 {r.status === "error" && (
                   <span className="mt-0.5 shrink-0 text-red-500">✗</span>

@@ -28,7 +28,7 @@ export function Header({
                 referrerPolicy="no-referrer"
               />
             )}
-            <div className="hidden sm:block text-right">
+            <div className="hidden sm:block text-left">
               {userName && (
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-tight">{userName}</p>
               )}

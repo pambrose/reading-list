@@ -162,8 +162,7 @@ export function BulkImport({
       {urls.length === 0 && !importing && (
         <div>
           <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
-            Select a <code>.txt</code> file with one URL per line (same format
-            as Export).
+            Select a <code>.txt</code> file with one URL per line.
           </p>
           <input
             type="file"

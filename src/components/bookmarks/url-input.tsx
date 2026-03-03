@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Collection } from "@/types/database";
 import { PRIORITY_LEVELS, PRIORITY_LABELS } from "@/lib/utils/priority";
 import type { Priority } from "@/lib/utils/priority";
+import { BulkImport } from "./bulk-import";
 
 export function UrlInput({ collections }: { collections: Collection[] }) {
   const [url, setUrl] = useState("");
@@ -12,6 +13,7 @@ export function UrlInput({ collections }: { collections: Collection[] }) {
   const [priority, setPriority] = useState<Priority>("normal");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,7 +90,20 @@ export function UrlInput({ collections }: { collections: Collection[] }) {
       >
         {loading ? "Saving..." : "Save"}
       </button>
+      <button
+        type="button"
+        onClick={() => setShowBulkImport((v) => !v)}
+        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+      >
+        Import
+      </button>
     </form>
+    {showBulkImport && (
+      <BulkImport
+        collections={collections}
+        onClose={() => setShowBulkImport(false)}
+      />
+    )}
     </div>
   );
 }

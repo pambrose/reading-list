@@ -7,6 +7,7 @@ import { timeAgo } from "@/lib/utils/time";
 import { PRIORITY_BORDER, PRIORITY_LEVELS, PRIORITY_LABELS } from "@/lib/utils/priority";
 import type { Priority } from "@/lib/utils/priority";
 import { PriorityBadge } from "./priority-badge";
+import { RepoStats } from "./repo-stats";
 
 export function BookmarkCard({
   bookmark,
@@ -119,6 +120,7 @@ export function BookmarkCard({
               </span>
             )}
             <PriorityBadge priority={bookmark.priority} />
+            <RepoStats bookmark={bookmark} />
             <button
               onClick={toggleRead}
               className={`text-xs font-medium transition-colors ${

@@ -18,6 +18,9 @@ export interface Bookmark {
   description: string | null;
   image_url: string | null;
   site_name: string | null;
+  repo_stars: number | null;
+  repo_forks: number | null;
+  repo_language: string | null;
   is_read: boolean;
   priority: Priority;
   created_at: string;

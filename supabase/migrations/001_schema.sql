@@ -26,6 +26,9 @@ create table public.bookmarks (
   description text,
   image_url text,
   site_name text,
+  repo_stars integer,
+  repo_forks integer,
+  repo_language text,
   is_read boolean not null default false,
   priority text not null default 'normal' check (priority in ('urgent', 'high', 'normal', 'low')),
   priority_order smallint generated always as (

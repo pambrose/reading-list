@@ -5,6 +5,9 @@ export interface OGMetadata {
   description: string | null;
   image_url: string | null;
   site_name: string | null;
+  repo_stars?: number | null;
+  repo_forks?: number | null;
+  repo_language?: string | null;
 }
 
 // --- URL detection functions ---
@@ -48,16 +51,26 @@ export function isTikTokUrl(url: string): boolean {
   }
 }
 
-export function isGitRepoUrl(url: string): boolean {
+export function isGitHubUrl(url: string): boolean {
   try {
     const u = new URL(url);
-    return (
-      u.hostname === "github.com" || u.hostname === "www.github.com" ||
-      u.hostname === "gitlab.com" || u.hostname === "www.gitlab.com"
-    );
+    return u.hostname === "github.com" || u.hostname === "www.github.com";
   } catch {
     return false;
   }
+}
+
+export function isGitLabUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.hostname === "gitlab.com" || u.hostname === "www.gitlab.com";
+  } catch {
+    return false;
+  }
+}
+
+export function isGitRepoUrl(url: string): boolean {
+  return isGitHubUrl(url) || isGitLabUrl(url);
 }
 
 function isSpotifyUrl(url: string): boolean {
@@ -348,6 +361,71 @@ async function fetchSlideShareMetadata(url: string): Promise<OGMetadata> {
   };
 }
 
+async function fetchGitHubMetadata(url: string): Promise<OGMetadata> {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length < 2) return await fetchGenericOGMetadata(url);
+    const [owner, repo] = parts;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      signal: controller.signal,
+      headers: { "Accept": "application/vnd.github.v3+json", "User-Agent": "ReadingListBot/1.0" },
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) return await fetchGenericOGMetadata(url);
+
+    const data = await response.json();
+    return {
+      title: data.full_name || `${owner}/${repo}`,
+      description: data.description || null,
+      image_url: data.owner?.avatar_url || null,
+      site_name: "GitHub",
+      repo_stars: data.stargazers_count ?? null,
+      repo_forks: data.forks_count ?? null,
+      repo_language: data.language || null,
+    };
+  } catch {
+    return await fetchGenericOGMetadata(url);
+  }
+}
+
+async function fetchGitLabMetadata(url: string): Promise<OGMetadata> {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length < 2) return await fetchGenericOGMetadata(url);
+    const projectPath = parts.slice(0, 2).join("/");
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(
+      `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectPath)}`,
+      { signal: controller.signal, headers: { "User-Agent": "ReadingListBot/1.0" } },
+    );
+    clearTimeout(timeout);
+
+    if (!response.ok) return await fetchGenericOGMetadata(url);
+
+    const data = await response.json();
+    const topics = data.topics as string[] | undefined;
+    return {
+      title: data.path_with_namespace || projectPath,
+      description: data.description || null,
+      image_url: data.avatar_url || null,
+      site_name: "GitLab",
+      repo_stars: data.star_count ?? null,
+      repo_forks: data.forks_count ?? null,
+      repo_language: topics?.[0] || null,
+    };
+  } catch {
+    return await fetchGenericOGMetadata(url);
+  }
+}
+
 // --- Main entry point ---
 
 export async function fetchOGMetadata(url: string): Promise<OGMetadata> {
@@ -362,6 +440,9 @@ export async function fetchOGMetadata(url: string): Promise<OGMetadata> {
     if (isSoundCloudUrl(url)) return await fetchSoundCloudMetadata(url);
     if (isFlickrUrl(url)) return await fetchFlickrMetadata(url);
     if (isSlideShareUrl(url)) return await fetchSlideShareMetadata(url);
+
+    if (isGitHubUrl(url)) return await fetchGitHubMetadata(url);
+    if (isGitLabUrl(url)) return await fetchGitLabMetadata(url);
 
     // Instagram has no public oEmbed — use OG scraping with site_name fallback
     if (isInstagramUrl(url)) {

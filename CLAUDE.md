@@ -36,8 +36,11 @@ Server components fetch data and pass it as props to client components. Client c
 URL metadata is fetched server-side during bookmark creation with a 5-second timeout:
 - **YouTube**: oEmbed API for title + deterministic thumbnail URL
 - **Twitter/X**: oEmbed for tweet text + parallel OG image fetch from page
+- **GitHub**: REST API (`/repos/{owner}/{repo}`) for stars, forks, language, description, avatar
+- **GitLab**: REST API (`/projects/{path}`) for stars, forks, topics, description, avatar
 - **Other URLs**: Cheerio parses OG tags from HTML, falls back to `<title>` and meta description
 - Returns nulls gracefully on failure — never blocks bookmark creation
+- Non-repo GitHub/GitLab pages (profiles, orgs) fall back to generic OG scraping
 
 ### Auto-Categorization
 
@@ -77,4 +80,4 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 Two tables defined in `supabase/migrations/001_schema.sql`. Reset with `supabase/drop_all.sql`.
 
 - **collections**: id, user_id, name, is_public, share_slug, created_at
-- **bookmarks**: id, user_id, collection_id, url, title, description, image_url, site_name, is_read, priority, priority_order (computed), created_at
+- **bookmarks**: id, user_id, collection_id, url, title, description, image_url, site_name, repo_stars, repo_forks, repo_language, is_read, priority, priority_order (computed), created_at

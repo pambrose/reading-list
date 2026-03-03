@@ -1,6 +1,7 @@
 import type { Bookmark } from "@/types/database";
 import { PRIORITY_BORDER } from "@/lib/utils/priority";
 import { PriorityBadge } from "./priority-badge";
+import { RepoStats } from "./repo-stats";
 
 export function BookmarkCardReadonly({ bookmark }: { bookmark: Bookmark }) {
   const displayUrl = (() => {
@@ -41,8 +42,9 @@ export function BookmarkCardReadonly({ bookmark }: { bookmark: Bookmark }) {
               {bookmark.description}
             </p>
           )}
-          <div className="mt-2">
+          <div className="mt-2 flex items-center gap-3">
             <PriorityBadge priority={bookmark.priority} />
+            <RepoStats bookmark={bookmark} />
           </div>
         </div>
       </div>

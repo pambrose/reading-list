@@ -64,10 +64,10 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleRename()}
           autoFocus
-          className="w-32 rounded border border-gray-300 px-2 py-0.5 text-sm focus:border-blue-500 focus:outline-none"
+          className="w-32 rounded border border-gray-300 px-2 py-0.5 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
         />
         <button onClick={handleRename} className="text-xs text-blue-600 hover:text-blue-700">Save</button>
-        <button onClick={() => setIsRenaming(false)} className="text-xs text-gray-500">Cancel</button>
+        <button onClick={() => setIsRenaming(false)} className="text-xs text-gray-500 dark:text-gray-400">Cancel</button>
       </div>
     );
   }
@@ -76,7 +76,7 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
     <div className="relative inline-block">
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
         title="Collection settings"
       >
         <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
@@ -85,29 +85,29 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
       </button>
 
       {menuOpen && (
-        <div className="absolute left-0 top-7 z-10 w-56 rounded-lg border bg-white py-1 shadow-lg">
+        <div className="absolute left-0 top-7 z-10 w-56 rounded-lg border bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800">
           <button
             onClick={() => { setIsRenaming(true); setMenuOpen(false); }}
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             Rename
           </button>
           <button
             onClick={togglePublic}
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             {collection.is_public ? "Make private" : "Share publicly"}
           </button>
           {(collection.is_public && collection.share_slug) && (
-            <div className="border-t px-3 py-2">
-              <p className="text-xs text-gray-500 mb-1">Share URL:</p>
+            <div className="border-t px-3 py-2 dark:border-gray-600">
+              <p className="text-xs text-gray-500 mb-1 dark:text-gray-400">Share URL:</p>
               <div className="flex items-center gap-1">
-                <code className="flex-1 truncate text-xs text-blue-600">
+                <code className="flex-1 truncate text-xs text-blue-600 dark:text-blue-400">
                   /share/{collection.share_slug}
                 </code>
                 <button
                   onClick={copyShareUrl}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
                 >
                   Copy
                 </button>
@@ -116,7 +116,7 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
           )}
           <button
             onClick={handleDelete}
-            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
           >
             Delete collection
           </button>

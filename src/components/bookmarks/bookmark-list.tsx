@@ -10,9 +10,9 @@ export function BookmarkList({
 }) {
   if (bookmarks.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-300 py-12 text-center">
-        <p className="text-sm text-gray-500">No bookmarks yet</p>
-        <p className="mt-1 text-xs text-gray-400">
+      <div className="rounded-lg border border-dashed border-gray-300 py-12 text-center dark:border-gray-600">
+        <p className="text-sm text-gray-500 dark:text-gray-400">No bookmarks yet</p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
           Paste a URL above to save your first bookmark
         </p>
       </div>

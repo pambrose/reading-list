@@ -38,13 +38,13 @@ export function CollectionTabs({ collections }: { collections: Collection[] }) {
   const pillClass = (active: boolean) =>
     `rounded-full px-3 py-1 text-sm font-medium transition-colors ${
       active
-        ? "bg-blue-100 text-blue-700"
-        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+        : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
     }`;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-medium text-gray-500 uppercase">Collections:</span>
+      <span className="text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Collections:</span>
       <button
         onClick={() => setCollection("")}
         className={pillClass(!currentCollection)}
@@ -75,7 +75,7 @@ export function CollectionTabs({ collections }: { collections: Collection[] }) {
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             placeholder="Name"
             autoFocus
-            className="w-28 rounded-full border border-gray-300 px-3 py-1 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-28 rounded-full border border-gray-300 px-3 py-1 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
           />
           <button
             onClick={handleCreate}
@@ -85,7 +85,7 @@ export function CollectionTabs({ collections }: { collections: Collection[] }) {
           </button>
           <button
             onClick={() => { setIsCreating(false); setNewName(""); }}
-            className="text-xs text-gray-500 hover:text-gray-700"
+            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           >
             Cancel
           </button>
@@ -93,7 +93,7 @@ export function CollectionTabs({ collections }: { collections: Collection[] }) {
       ) : (
         <button
           onClick={() => setIsCreating(true)}
-          className="rounded-full border border-dashed border-gray-300 px-3 py-1 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600"
+          className="rounded-full border border-dashed border-gray-300 px-3 py-1 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-300"
         >
           + New
         </button>

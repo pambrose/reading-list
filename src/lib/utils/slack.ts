@@ -31,6 +31,13 @@ export function notifySlackBookmarkCreated(bookmark: BookmarkNotification): void
     body: JSON.stringify({ text }),
     signal: controller.signal,
   })
-    .catch(() => {})
+    .then((res) => {
+      if (!res.ok) {
+        console.error(`Slack webhook failed: ${res.status} ${res.statusText}`);
+      }
+    })
+    .catch((err) => {
+      console.error("Slack webhook error:", err instanceof Error ? err.message : err);
+    })
     .finally(() => clearTimeout(timeout));
 }

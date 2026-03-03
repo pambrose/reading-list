@@ -16,7 +16,11 @@ export default async function MainLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Header userEmail={user.email || "User"} />
+      <Header
+        userEmail={user.email || "User"}
+        userName={user.user_metadata?.full_name || user.user_metadata?.name || null}
+        avatarUrl={user.user_metadata?.avatar_url || null}
+      />
       <main className="mx-auto max-w-4xl px-4 py-6">{children}</main>
     </div>
   );

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { notifySlackUserLogin } from "@/lib/utils/slack";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -26,6 +27,10 @@ export async function GET(request: Request) {
             .from("collections")
             .insert(missing.map((name) => ({ user_id: user.id, name })));
         }
+        await notifySlackUserLogin({
+          email: user.email,
+          name: user.user_metadata?.full_name,
+        });
       }
       return NextResponse.redirect(`${origin}${next}`);
     }

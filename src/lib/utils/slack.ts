@@ -1,26 +1,14 @@
-interface BookmarkNotification {
-  title: string | null;
-  url: string;
-  collectionName: string | null;
-  priority: string;
+interface LoginNotification {
+  email: string | undefined;
+  name: string | undefined;
 }
 
-export async function notifySlackBookmarkCreated(bookmark: BookmarkNotification): Promise<void> {
+export async function notifySlackUserLogin(user: LoginNotification): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) return;
 
-  const displayTitle = bookmark.title || bookmark.url;
-  const titleLink = `<${bookmark.url}|${displayTitle}>`;
-
-  const parts = [`📎 New bookmark: ${titleLink}`];
-  if (bookmark.collectionName) {
-    parts.push(`Collection: ${bookmark.collectionName}`);
-  }
-  if (bookmark.priority && bookmark.priority !== "normal") {
-    parts.push(`Priority: ${bookmark.priority}`);
-  }
-
-  const text = parts.join("\n");
+  const displayName = user.name || user.email || "Unknown user";
+  const text = `👋 ${displayName} just logged in`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);

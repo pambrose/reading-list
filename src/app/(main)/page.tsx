@@ -6,6 +6,7 @@ import { BookmarkList } from "@/components/bookmarks/bookmark-list";
 import { CollectionMenu } from "@/components/collections/collection-menu";
 import { RefreshButton } from "@/components/bookmarks/refresh-button";
 import { ExportButton } from "@/components/bookmarks/export-button";
+import { DeleteAllButton } from "@/components/bookmarks/delete-all-button";
 import { PRIORITY_LEVELS } from "@/lib/utils/priority";
 import type { Bookmark, Collection } from "@/types/database";
 
@@ -92,6 +93,7 @@ export default async function DashboardPage({
           {typedBookmarks.length} bookmark{typedBookmarks.length !== 1 ? "s" : ""}
         </span>
         <div className="flex items-center gap-1">
+          <DeleteAllButton ids={typedBookmarks.map((b) => b.id)} />
           <ExportButton urls={typedBookmarks.map((b) => b.url)} />
           <RefreshButton />
         </div>

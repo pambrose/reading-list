@@ -61,16 +61,39 @@ async function fetchYouTubeMetadata(url: string, videoId: string): Promise<OGMet
   };
 }
 
+async function fetchTwitterImage(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "ReadingListBot/1.0" },
+    });
+    clearTimeout(timeout);
+    if (!response.ok) return null;
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    return $('meta[property="og:image"]').attr("content")?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchTwitterMetadata(url: string): Promise<OGMetadata> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`;
-  const response = await fetch(oembedUrl, { signal: controller.signal });
+
+  // Fetch oEmbed and OG image in parallel
+  const [oembedResponse, imageUrl] = await Promise.all([
+    fetch(oembedUrl, { signal: controller.signal }),
+    fetchTwitterImage(url),
+  ]);
   clearTimeout(timeout);
 
-  if (!response.ok) return { title: null, description: null, image_url: null, site_name: "X" };
+  if (!oembedResponse.ok) return { title: null, description: null, image_url: imageUrl, site_name: "X" };
 
-  const data = await response.json();
+  const data = await oembedResponse.json();
   // Strip HTML tags from the tweet text
   const tweetText = data.html
     ? cheerio.load(data.html)("blockquote").first().text().trim()
@@ -78,7 +101,7 @@ async function fetchTwitterMetadata(url: string): Promise<OGMetadata> {
   return {
     title: data.author_name ? `@${data.author_name}` : null,
     description: tweetText || null,
-    image_url: null,
+    image_url: imageUrl,
     site_name: "X",
   };
 }

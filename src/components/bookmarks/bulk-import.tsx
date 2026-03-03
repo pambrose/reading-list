@@ -28,8 +28,24 @@ export function BulkImport({
   const [results, setResults] = useState<ImportResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [done, setDone] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [browser, setBrowser] = useState("Safari");
   const abortRef = useRef<AbortController | null>(null);
   const router = useRouter();
+
+  const browserCommands: Record<string, { command: string; note?: string }> = {
+    Safari: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Safari" to (url of tabs of windows) as text' > safari-urls.txt` },
+    Chrome: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Google Chrome" to (url of tabs of windows) as text' > chrome-urls.txt` },
+    "Microsoft Edge": { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Microsoft Edge" to (url of tabs of windows) as text' > edge-urls.txt` },
+    Brave: { command: `osascript -e 'set text item delimiters to linefeed' -e 'tell app "Brave Browser" to (url of tabs of windows) as text' > brave-urls.txt` },
+    Firefox: { command: `copy([...gBrowser.tabs].map(t => t.linkedBrowser.currentURI.spec).join('\\n'))`, note: "Firefox doesn't support AppleScript. Open the Browser Console (Cmd+Shift+J), run this command, then paste the result into a text file." },
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(browserCommands[browser].command);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -178,6 +194,55 @@ export function BulkImport({
             onChange={handleFileChange}
             className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-600 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/30 dark:file:text-blue-400 dark:hover:file:bg-blue-900/50"
           />
+          <details className="mt-3">
+            <summary className="cursor-pointer text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 select-none">
+              How to gather the URLs of all your browser tabs
+            </summary>
+            <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+              <div className="mb-2 flex items-center gap-2">
+                <label className="text-xs text-gray-600 dark:text-gray-400">Browser:</label>
+                <select
+                  value={browser}
+                  onChange={(e) => { setBrowser(e.target.value); setCopied(false); }}
+                  className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  {Object.keys(browserCommands).map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+              {browserCommands[browser].note && (
+                <p className="mb-2 text-xs text-amber-600 dark:text-amber-400">
+                  {browserCommands[browser].note}
+                </p>
+              )}
+              {!browserCommands[browser].note && (
+                <p className="mb-2 text-xs text-gray-600 dark:text-gray-400">
+                  Run this command in your terminal to export all open tab URLs to a file:
+                </p>
+              )}
+              <div className="flex items-start gap-2">
+                <code className="flex-1 whitespace-pre-wrap break-all rounded bg-gray-200 px-2 py-1.5 text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                  {browserCommands[browser].command}
+                </code>
+                <button
+                  onClick={handleCopy}
+                  className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300 transition-colors"
+                  title="Copy to clipboard"
+                >
+                  {copied ? (
+                    <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          </details>
         </div>
       )}
 

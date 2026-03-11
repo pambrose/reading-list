@@ -5,6 +5,7 @@ import { notifySlackUserLogin } from "@/lib/utils/slack";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const port = searchParams.get("port");
 
   if (code) {
     const supabase = await createClient();
@@ -39,14 +40,17 @@ export async function GET(request: Request) {
         });
       }
 
-      // Redirect to desktop auth page with tokens
-      const { access_token, refresh_token } = sessionData.session;
-      return NextResponse.redirect(
-        `${origin}/auth/desktop?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`
-      );
+      // Redirect tokens to Electron's local auth server
+      if (port) {
+        const { access_token, refresh_token } = sessionData.session;
+        return NextResponse.redirect(
+          `http://127.0.0.1:${port}/auth/callback?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`
+        );
+      }
+
+      return NextResponse.redirect(`${origin}/`);
     }
   }
 
-  // Fallback: redirect to login with error
   return NextResponse.redirect(`${origin}/login?error=auth`);
 }

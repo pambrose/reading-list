@@ -9,20 +9,21 @@ function LoginDesktopContent() {
 
   useEffect(() => {
     const provider = searchParams.get("provider") as "google" | "github" | null;
-    if (provider) {
+    const port = searchParams.get("port");
+    if (provider && port) {
       const supabase = createClient();
       supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback-desktop`,
+          redirectTo: `${window.location.origin}/auth/callback-desktop?port=${port}`,
         },
       });
     }
   }, [searchParams]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-gray-500">Redirecting to sign in...</p>
+    <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-300">
+      <p>Redirecting to sign in...</p>
     </div>
   );
 }

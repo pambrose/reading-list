@@ -26,13 +26,16 @@ export function LoginButtons() {
 
   const signInWith = (provider: "google" | "github") => {
     setError(null);
-    const isDesktop = navigator.userAgent.includes("Electron");
-    const callbackPath = isDesktop ? "/auth/callback-desktop" : "/auth/callback";
+    if (navigator.userAgent.includes("Electron")) {
+      // Open OAuth in the system browser so passkeys and PKCE cookies work
+      window.open(`${window.location.origin}/auth/login-desktop?provider=${provider}`);
+      return;
+    }
     const supabase = createClient();
     supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}${callbackPath}`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
   };

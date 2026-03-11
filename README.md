@@ -1,4 +1,4 @@
-# Reading List
+# tldrq.com
 
 Save, organize, and track your reading with a clean, minimal web app.
 

@@ -10,7 +10,6 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(collection.name);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const handleRename = async () => {
     if (!newName.trim()) return;
@@ -25,22 +24,6 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
     router.refresh();
   };
 
-  const togglePublic = async () => {
-    const res = await fetch(`/api/collections/${collection.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_public: !collection.is_public }),
-    });
-    if (!res.ok) { alert("Failed to update sharing"); return; }
-    const data = await res.json();
-    if (data.share_slug) {
-      setShareUrl(`${window.location.origin}/share/${data.share_slug}`);
-    } else {
-      setShareUrl(null);
-    }
-    router.refresh();
-  };
-
   const handleDelete = async () => {
     if (!confirm(`Delete "${collection.name}"? Bookmarks will become uncategorized.`)) return;
     const res = await fetch(`/api/collections/${collection.id}`, { method: "DELETE" });
@@ -51,11 +34,6 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
     } else {
       router.refresh();
     }
-  };
-
-  const copyShareUrl = () => {
-    const url = shareUrl || `${window.location.origin}/share/${collection.share_slug}`;
-    navigator.clipboard.writeText(url);
   };
 
   if (isRenaming) {
@@ -95,28 +73,6 @@ export function CollectionMenu({ collection }: { collection: Collection }) {
           >
             Rename
           </button>
-          <button
-            onClick={togglePublic}
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            {collection.is_public ? "Make private" : "Share publicly"}
-          </button>
-          {(collection.is_public && collection.share_slug) && (
-            <div className="border-t px-3 py-2 dark:border-gray-600">
-              <p className="text-xs text-gray-500 mb-1 dark:text-gray-400">Share URL:</p>
-              <div className="flex items-center gap-1">
-                <code className="flex-1 truncate text-xs text-blue-600 dark:text-blue-400">
-                  /share/{collection.share_slug}
-                </code>
-                <button
-                  onClick={copyShareUrl}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-          )}
           <button
             onClick={handleDelete}
             className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"

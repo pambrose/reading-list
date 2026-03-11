@@ -1,3 +1,5 @@
+"use client";
+
 import type { Bookmark } from "@/types/database";
 import { PRIORITY_BORDER } from "@/lib/utils/priority";
 import { getDisplayUrl } from "@/lib/utils/ui";

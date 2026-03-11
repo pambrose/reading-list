@@ -7,15 +7,17 @@ import { CollectionMenu } from "@/components/collections/collection-menu";
 import { RefreshButton } from "@/components/bookmarks/refresh-button";
 import { ExportButton } from "@/components/bookmarks/export-button";
 import { DeleteAllButton } from "@/components/bookmarks/delete-all-button";
+import { ShareButton } from "@/components/share-button";
+import { SearchInput } from "@/components/bookmarks/search-input";
 import { PRIORITY_LEVELS } from "@/lib/utils/priority";
 import type { Bookmark, Collection } from "@/types/database";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ collection?: string; filter?: string; priority?: string; sort?: string }>;
+  searchParams: Promise<{ collection?: string; filter?: string; priority?: string; sort?: string; search?: string }>;
 }) {
-  const { collection, filter, priority, sort } = await searchParams;
+  const { collection, filter, priority, sort, search } = await searchParams;
   const supabase = await createClient();
 
   // Fetch collections
@@ -45,6 +47,13 @@ export default async function DashboardPage({
     query = query.eq("priority", priority);
   }
 
+  if (search) {
+    const term = `%${search}%`;
+    query = query.or(
+      `title.ilike.${term},description.ilike.${term},url.ilike.${term},site_name.ilike.${term}`
+    );
+  }
+
   if (sort === "priority") {
     query = query
       .order("priority_order", { ascending: true })
@@ -69,14 +78,15 @@ export default async function DashboardPage({
       <UrlInput collections={typedCollections} />
 
       {/* Collapsible filters */}
-      <details open={!!(collection || filter || priority || sort)} className="group">
+      <details open={!!(collection || filter || priority || sort || search)} className="group">
         <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium uppercase text-gray-500 dark:text-gray-400 select-none">
           <svg className="h-4 w-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          Filters{(collection || filter || priority || sort) ? " (active)" : ""}
+          Filters{(collection || filter || priority || sort || search) ? " (active)" : ""}
         </summary>
         <div className="mt-3 space-y-4">
+          <SearchInput />
           <div className="flex items-center gap-2">
             <div className="flex-1">
               <CollectionTabs collections={typedCollections} />
@@ -95,6 +105,7 @@ export default async function DashboardPage({
         <div className="flex items-center gap-1">
           <DeleteAllButton ids={typedBookmarks.map((b) => b.id)} />
           <ExportButton urls={typedBookmarks.map((b) => b.url)} />
+          <ShareButton />
           <RefreshButton />
         </div>
       </div>

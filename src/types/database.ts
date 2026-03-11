@@ -25,3 +25,18 @@ export interface Bookmark {
   priority: Priority;
   created_at: string;
 }
+
+export interface SharedView {
+  id: string;
+  user_id: string;
+  slug: string;
+  collection_id: string | null;
+  collection_uncategorized: boolean;
+  filter: string | null;
+  priority: string | null;
+  sort: string | null;
+  search: string | null;
+  title: string | null;
+  is_active: boolean;
+  created_at: string;
+}

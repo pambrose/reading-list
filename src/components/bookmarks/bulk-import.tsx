@@ -37,7 +37,7 @@ export function BulkImport({
   useEffect(() => {
     const ua = navigator.userAgent;
     if (ua.includes("Win")) {
-      setOs("Windows");
+      setOs("Windows"); // eslint-disable-line react-hooks/set-state-in-effect -- detecting OS on mount
       setBrowser("Chrome");
     } else if (!ua.includes("Mac")) {
       setOs("Linux");

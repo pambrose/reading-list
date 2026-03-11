@@ -16,6 +16,7 @@ export function LoginButtons() {
       if (hash) {
         const params = new URLSearchParams(hash.slice(1));
         const description = params.get("error_description");
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reading URL hash on mount
         setError(description?.replace(/\+/g, " ") || "Authentication failed. Please try again.");
       } else {
         setError("Authentication failed. Please try again.");

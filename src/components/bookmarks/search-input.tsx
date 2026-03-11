@@ -11,7 +11,7 @@ export function SearchInput() {
 
   // Sync local state when URL changes (browser back/forward)
   useEffect(() => {
-    setValue(searchParams.get("search") ?? "");
+    setValue(searchParams.get("search") ?? ""); // eslint-disable-line react-hooks/set-state-in-effect -- syncing with URL state
   }, [searchParams]);
 
   function updateUrl(term: string) {

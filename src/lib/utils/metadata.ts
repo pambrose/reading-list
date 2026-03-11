@@ -193,7 +193,7 @@ async function fetchOEmbedMetadata(oembedUrl: string, siteName: string): Promise
 /** Generic OG metadata scraper for sites without oEmbed */
 async function fetchGenericOGMetadata(url: string): Promise<OGMetadata> {
   const response = await fetchWithTimeout(url, {
-    headers: { "User-Agent": "ReadingListBot/1.0" },
+    headers: { "User-Agent": "tldrqBot/1.0" },
   });
 
   if (!response.ok) {
@@ -240,7 +240,7 @@ async function fetchYouTubeMetadata(url: string, videoId: string): Promise<OGMet
 async function fetchTwitterImage(url: string): Promise<string | null> {
   try {
     const response = await fetchWithTimeout(url, {
-      headers: { "User-Agent": "ReadingListBot/1.0" },
+      headers: { "User-Agent": "tldrqBot/1.0" },
     });
     if (!response.ok) return null;
     const html = await response.text();
@@ -334,7 +334,7 @@ async function fetchGitHubMetadata(url: string): Promise<OGMetadata> {
     const [owner, repo] = parts;
 
     const response = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, {
-      headers: { "Accept": "application/vnd.github.v3+json", "User-Agent": "ReadingListBot/1.0" },
+      headers: { "Accept": "application/vnd.github.v3+json", "User-Agent": "tldrqBot/1.0" },
     });
 
     if (!response.ok) return await fetchGenericOGMetadata(url);
@@ -363,7 +363,7 @@ async function fetchGitLabMetadata(url: string): Promise<OGMetadata> {
 
     const response = await fetchWithTimeout(
       `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectPath)}`,
-      { headers: { "User-Agent": "ReadingListBot/1.0" } },
+      { headers: { "User-Agent": "tldrqBot/1.0" } },
     );
 
     if (!response.ok) return await fetchGenericOGMetadata(url);

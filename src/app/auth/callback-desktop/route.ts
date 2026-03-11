@@ -5,14 +5,17 @@ import { notifySlackUserLogin } from "@/lib/utils/slack";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
+    const { data: sessionData, error } =
+      await supabase.auth.exchangeCodeForSession(code);
+
+    if (!error && sessionData?.session) {
       // Ensure default collections exist for the user
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         const defaultCollections = ["Videos", "Tweets", "Articles", "Repos"];
         const { data: existing } = await supabase
@@ -21,7 +24,9 @@ export async function GET(request: Request) {
           .eq("user_id", user.id)
           .in("name", defaultCollections);
         const existingNames = new Set((existing || []).map((c) => c.name));
-        const missing = defaultCollections.filter((name) => !existingNames.has(name));
+        const missing = defaultCollections.filter(
+          (name) => !existingNames.has(name)
+        );
         if (missing.length > 0) {
           await supabase
             .from("collections")
@@ -34,10 +39,14 @@ export async function GET(request: Request) {
         });
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      // Redirect to custom protocol — Electron catches this
+      const { access_token, refresh_token } = sessionData.session;
+      return NextResponse.redirect(
+        `tldrq://auth/callback?access_token=${encodeURIComponent(access_token)}&refresh_token=${encodeURIComponent(refresh_token)}`
+      );
     }
   }
 
-  // Return the user to login page with error
+  // Fallback: redirect to login with error
   return NextResponse.redirect(`${origin}/login?error=auth`);
 }

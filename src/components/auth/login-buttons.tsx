@@ -26,11 +26,13 @@ export function LoginButtons() {
 
   const signInWith = (provider: "google" | "github") => {
     setError(null);
+    const isDesktop = navigator.userAgent.includes("Electron");
+    const callbackPath = isDesktop ? "/auth/callback-desktop" : "/auth/callback";
     const supabase = createClient();
     supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}${callbackPath}`,
       },
     });
   };

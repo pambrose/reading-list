@@ -189,7 +189,8 @@ export function BulkImport({
   const errorCount = results.filter((r) => r.status === "error").length;
 
   return (
-    <div className="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-600 dark:bg-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="w-full max-w-lg rounded-lg border border-gray-300 bg-white p-4 shadow-xl dark:border-gray-600 dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
           Bulk Import
@@ -421,6 +422,7 @@ export function BulkImport({
           </button>
         </div>
       )}
+    </div>
     </div>
   );
 }
